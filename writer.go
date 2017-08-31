@@ -3,6 +3,7 @@ package kail
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/fatih/color"
 )
@@ -31,24 +32,27 @@ func (w *writer) Print(ev Event) error {
 func (w *writer) Fprint(out io.Writer, ev Event) error {
 	prefix := w.prefix(ev)
 
-	if _, err := prefixColor.Fprint(out, prefix); err != nil {
-		return err
-	}
-	if _, err := prefixColor.Fprint(out, ": "); err != nil {
-		return err
-	}
-
 	log := ev.Log()
+	lines := strings.Split(string(log), "\n")
 
-	if _, err := out.Write(log); err != nil {
-		return err
-	}
+	for _, line := range lines {
+		if len(line) > 0 {
+			if _, err := prefixColor.Fprint(out, prefix); err != nil {
+				return err
+			}
+			if _, err := prefixColor.Fprint(out, ": "); err != nil {
+				return err
+			}
 
-	if sz := len(log); sz == 0 || log[sz-1] != byte('\n') {
-		if _, err := out.Write([]byte("\n")); err != nil {
-			return err
+			if _, err := out.Write([]byte(line)); err != nil {
+				return err
+			}
+			if _, err := out.Write([]byte("\n")); err != nil {
+				return err
+			}
 		}
 	}
+
 	return nil
 }
 
